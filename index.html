@@ -350,7 +350,8 @@
   <script>
     // 客户ID - 实际部署时应该从URL参数或登录状态获取
     const CLIENT_ID = new URLSearchParams(window.location.search).get('client') || 'demo_client';
-    const API_BASE = window.location.origin;
+    // 本机开发时使用线上API，部署时使用当前域名
+    const API_BASE = window.location.protocol === 'file:' ? 'https://ai-polisher.vercel.app' : window.location.origin;
 
     // 页面加载时获取状态
     window.onload = function() {
