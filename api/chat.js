@@ -27,8 +27,25 @@ export default async function handler(req, res) {
 
     const client = clientsData[clientId];
 
+    // 从 Vercel KV 获取已使用量
+    let used = client.used || 0;
+    try {
+      const { createClient } = require('@vercel/kv');
+      const kv = createClient({
+        url: process.env.KV_URL,
+        token: process.env.KV_REST_API_TOKEN,
+      });
+      const stored = await kv.get(`client_usage_${clientId}`);
+      if (stored !== null) {
+        used = parseInt(stored) || 0;
+      }
+    } catch (kvError) {
+      // KV 不可用时，使用本地值
+      console.log('KV not available, using local value');
+    }
+
     // 检查额度
-    if (client.used >= client.limit) {
+    if (used >= client.limit) {
       return res.status(403).json({ error: '额度已用完，请联系管理员' });
     }
 
@@ -73,23 +90,30 @@ export default async function handler(req, res) {
 
     // 获取token消耗量
     const tokensUsed = result.usage?.total_tokens || 0;
+    const newUsed = used + tokensUsed;
 
-    // 更新客户额度
-    client.used += tokensUsed;
-
-    // 保存回文件
-    fs.writeFileSync(dataPath, JSON.stringify(clientsData, null, 2));
+    // 更新 Vercel KV
+    try {
+      const { createClient } = require('@vercel/kv');
+      const kv = createClient({
+        url: process.env.KV_URL,
+        token: process.env.KV_REST_API_TOKEN,
+      });
+      await kv.set(`client_usage_${clientId}`, newUsed.toString());
+    } catch (kvError) {
+      console.log('KV update failed:', kvError.message);
+    }
 
     // 返回结果
     return res.status(200).json({
       success: true,
       polishedText: result.choices[0].message.content,
       tokensUsed: tokensUsed,
-      remaining: client.limit - client.used,
+      remaining: client.limit - newUsed,
       usage: {
-        used: client.used,
+        used: newUsed,
         limit: client.limit,
-        percentage: ((client.used / client.limit) * 100).toFixed(1) + '%'
+        percentage: ((newUsed / client.limit) * 100).toFixed(1) + '%'
       }
     });
 

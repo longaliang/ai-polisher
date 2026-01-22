@@ -27,17 +27,36 @@ export default async function handler(req, res) {
 
     const client = clientsData[clientId];
 
+    // 从 Vercel KV 获取已使用量
+    let used = client.used || 0;
+    try {
+      const { createClient } = require('@vercel/kv');
+      const kv = createClient({
+        url: process.env.KV_URL,
+        token: process.env.KV_REST_API_TOKEN,
+      });
+      const stored = await kv.get(`client_usage_${clientId}`);
+      if (stored !== null) {
+        used = parseInt(stored) || 0;
+      }
+    } catch (kvError) {
+      // KV 不可用时，使用本地值
+      console.log('KV not available, using local value');
+    }
+
+    const remaining = client.limit - used;
+
     // 返回状态
     return res.status(200).json({
       clientId: clientId,
       clientName: client.name || clientId,
       usage: {
-        used: client.used,
+        used: used,
         limit: client.limit,
-        remaining: client.limit - client.used,
-        percentage: ((client.used / client.limit) * 100).toFixed(1) + '%',
-        isNearLimit: (client.used / client.limit) > 0.8,
-        isExhausted: client.used >= client.limit
+        remaining: remaining,
+        percentage: ((used / client.limit) * 100).toFixed(1) + '%',
+        isNearLimit: (used / client.limit) > 0.8,
+        isExhausted: used >= client.limit
       }
     });
 
