@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>API 管理后台</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f5f7fa;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .header {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+
+    .header h1 {
+      font-size: 24px;
+      color: #333;
+      margin-bottom: 8px;
+    }
+
+    .header p {
+      color: #666;
+      font-size: 14px;
+    }
+
+    .login-section {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+
+    .login-input {
+      width: 300px;
+      padding: 12px 16px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 14px;
+      margin-right: 12px;
+    }
+
+    .login-input:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    .button {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .button-primary {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+    }
+
+    .button-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    .button-secondary {
+      background: #f0f0f0;
+      color: #333;
+    }
+
+    .button-secondary:hover {
+      background: #e0e0e0;
+    }
+
+    .button-small {
+      padding: 6px 12px;
+      font-size: 12px;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .stat-card {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: #999;
+      margin-bottom: 8px;
+    }
+
+    .stat-value {
+      font-size: 24px;
+      font-weight: 700;
+      color: #333;
+    }
+
+    .table-container {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th {
+      text-align: left;
+      padding: 12px;
+      font-size: 12px;
+      color: #999;
+      font-weight: 600;
+      border-bottom: 1px solid #eee;
+    }
+
+    td {
+      padding: 16px 12px;
+      font-size: 14px;
+      color: #333;
+      border-bottom: 1px solid #f5f5f5;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background: #f0f0f0;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #667eea, #764ba2);
+      transition: width 0.3s;
+    }
+
+    .progress-fill.warning {
+      background: linear-gradient(90deg, #f093fb, #f5576c);
+    }
+
+    .progress-fill.danger {
+      background: linear-gradient(90deg, #fa709a, #fee140);
+    }
+
+    .alert {
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      font-size: 14px;
+    }
+
+    .alert-error {
+      background: #fee;
+      color: #c00;
+      border: 1px solid #fcc;
+    }
+
+    .alert-success {
+      background: #efe;
+      color: #080;
+      border: 1px solid #cfc;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      width: 90%;
+      max-width: 400px;
+    }
+
+    .modal-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 16px;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 8px;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    .loading {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border: 2px solid #fff;
+      border-radius: 50%;
+      border-top-color: transparent;
+      animation: spin 0.8s linear infinite;
+      margin-right: 8px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- 头部 -->
+    <div class="header">
+      <h1>🔧 API 管理后台</h1>
+      <p>查看和管理客户 API 使用情况</p>
+    </div>
+
+    <!-- 登录区域 -->
+    <div class="login-section" id="loginSection">
+      <h3 style="margin-bottom: 12px;">管理员登录</h3>
+      <input type="password" id="adminKey" class="login-input" placeholder="请输入管理员密码" onkeypress="if(event.key==='Enter') login()">
+      <button class="button button-primary" onclick="login()">登录</button>
+    </div>
+
+    <!-- 主内容区域 -->
+    <div id="mainContent" class="hidden">
+      <!-- 统计卡片 -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">客户总数</div>
+          <div class="stat-value" id="totalClients">-</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">总消耗 Tokens</div>
+          <div class="stat-value" id="totalUsed">-</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">总额度</div>
+          <div class="stat-value" id="totalLimit">-</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">平均使用率</div>
+          <div class="stat-value" id="avgUsage">-</div>
+        </div>
+      </div>
+
+      <!-- 提示信息 -->
+      <div class="alert alert-error hidden" id="errorAlert"></div>
+      <div class="alert alert-success hidden" id="successAlert"></div>
+
+      <!-- 操作按钮 -->
+      <div style="margin-bottom: 16px;">
+        <button class="button button-secondary" onclick="loadClients()">
+          🔄 刷新数据
+        </button>
+        <button class="button button-secondary" onclick="logout()">
+          🚪 退出登录
+        </button>
+      </div>
+
+      <!-- 客户列表 -->
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>客户ID</th>
+              <th>客户名称</th>
+              <th>邮箱</th>
+              <th>API Key</th>
+              <th>使用情况</th>
+              <th>消耗/额度</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="clientsTable">
+            <tr>
+              <td colspan="7" style="text-align: center; color: #999;">加载中...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- 编辑限额弹窗 -->
+  <div class="modal" id="editModal">
+    <div class="modal-content">
+      <div class="modal-title">编辑客户限额</div>
+      <div class="form-group">
+        <label class="form-label">客户名称</label>
+        <input type="text" class="form-input" id="editClientName" disabled>
+      </div>
+      <div class="form-group">
+        <label class="form-label">当前限额</label>
+        <input type="number" class="form-input" id="editCurrentLimit" disabled>
+      </div>
+      <div class="form-group">
+        <label class="form-label">新限额</label>
+        <input type="number" class="form-input" id="editNewLimit" min="0" step="1000">
+      </div>
+      <div class="modal-actions">
+        <button class="button button-secondary" onclick="closeEditModal()">取消</button>
+        <button class="button button-primary" onclick="saveLimit()">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = window.location.protocol === 'file:' ? 'https://ai-polisher.vercel.app' : window.location.origin;
+    let adminKey = localStorage.getItem('admin_key') || '';
+    let clients = [];
+    let currentEditClientId = null;
+
+    // 页面加载
+    window.onload = function() {
+      if (adminKey) {
+        document.getElementById('loginSection').classList.add('hidden');
+        document.getElementById('mainContent').classList.remove('hidden');
+        loadClients();
+      }
+    };
+
+    // 登录
+    function login() {
+      const key = document.getElementById('adminKey').value.trim();
+      if (!key) {
+        showError('请输入管理员密码');
+        return;
+      }
+
+      adminKey = key;
+      localStorage.setItem('admin_key', key);
+
+      document.getElementById('loginSection').classList.add('hidden');
+      document.getElementById('mainContent').classList.remove('hidden');
+      loadClients();
+    }
+
+    // 退出登录
+    function logout() {
+      adminKey = '';
+      localStorage.removeItem('admin_key');
+      document.getElementById('loginSection').classList.remove('hidden');
+      document.getElementById('mainContent').classList.add('hidden');
+      document.getElementById('adminKey').value = '';
+    }
+
+    // 加载客户列表
+    async function loadClients() {
+      try {
+        const response = await fetch(`${API_BASE}/api/admin-clients`, {
+          headers: {
+            'Authorization': `Bearer ${adminKey}`
+          }
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+          clients = data.clients;
+          renderTable();
+          updateStats();
+        } else {
+          showError(data.error || '加载失败');
+        }
+      } catch (error) {
+        showError('网络错误: ' + error.message);
+      }
+    }
+
+    // 渲染表格
+    function renderTable() {
+      const tbody = document.getElementById('clientsTable');
+
+      if (clients.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #999;">暂无数据</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = clients.map(client => {
+        const percentage = parseFloat(client.percentage);
+        const progressClass = percentage > 80 ? (percentage >= 100 ? 'danger' : 'warning') : '';
+
+        return `
+          <tr>
+            <td><strong>${client.id}</strong></td>
+            <td>${client.name}</td>
+            <td>${client.email}</td>
+            <td style="font-family: monospace; font-size: 12px;">${client.apiKey}</td>
+            <td>
+              <div class="progress-bar">
+                <div class="progress-fill ${progressClass}" style="width: ${percentage}%"></div>
+              </div>
+            </td>
+            <td>${client.used.toLocaleString()} / ${client.limit.toLocaleString()}</td>
+            <td>
+              <button class="button button-secondary button-small" onclick="openEditModal('${client.id}')">编辑限额</button>
+              <button class="button button-secondary button-small" onclick="resetUsage('${client.id}')">重置使用</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // 更新统计
+    function updateStats() {
+      const totalClients = clients.length;
+      const totalUsed = clients.reduce((sum, c) => sum + c.used, 0);
+      const totalLimit = clients.reduce((sum, c) => sum + c.limit, 0);
+      const avgUsage = totalLimit > 0 ? ((totalUsed / totalLimit) * 100).toFixed(1) : '0.0';
+
+      document.getElementById('totalClients').textContent = totalClients;
+      document.getElementById('totalUsed').textContent = totalUsed.toLocaleString();
+      document.getElementById('totalLimit').textContent = totalLimit.toLocaleString();
+      document.getElementById('avgUsage').textContent = avgUsage + '%';
+    }
+
+    // 打开编辑弹窗
+    function openEditModal(clientId) {
+      const client = clients.find(c => c.id === clientId);
+      if (!client) return;
+
+      currentEditClientId = clientId;
+      document.getElementById('editClientName').value = client.name;
+      document.getElementById('editCurrentLimit').value = client.limit;
+      document.getElementById('editNewLimit').value = client.limit;
+      document.getElementById('editModal').classList.add('active');
+    }
+
+    // 关闭编辑弹窗
+    function closeEditModal() {
+      document.getElementById('editModal').classList.remove('active');
+      currentEditClientId = null;
+    }
+
+    // 保存限额
+    async function saveLimit() {
+      const newLimit = parseInt(document.getElementById('editNewLimit').value);
+
+      if (!newLimit || newLimit < 0) {
+        alert('请输入有效的限额');
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_BASE}/api/admin-update`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${adminKey}`
+          },
+          body: JSON.stringify({
+            clientId: currentEditClientId,
+            action: 'update_limit',
+            limit: newLimit
+          })
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+          showSuccess('限额更新成功');
+          closeEditModal();
+          loadClients();
+        } else {
+          showError(data.error || '更新失败');
+        }
+      } catch (error) {
+        showError('网络错误: ' + error.message);
+      }
+    }
+
+    // 重置使用量
+    async function resetUsage(clientId) {
+      if (!confirm(`确定要重置客户 ${clientId} 的使用量吗？`)) return;
+
+      try {
+        const response = await fetch(`${API_BASE}/api/admin-update`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${adminKey}`
+          },
+          body: JSON.stringify({
+            clientId: clientId,
+            action: 'reset_usage'
+          })
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+          showSuccess('重置成功');
+          loadClients();
+        } else {
+          showError(data.error || '重置失败');
+        }
+      } catch (error) {
+        showError('网络错误: ' + error.message);
+      }
+    }
+
+    // 显示错误
+    function showError(message) {
+      const alert = document.getElementById('errorAlert');
+      alert.textContent = message;
+      alert.classList.remove('hidden');
+      document.getElementById('successAlert').classList.add('hidden');
+    }
+
+    // 显示成功
+    function showSuccess(message) {
+      const alert = document.getElementById('successAlert');
+      alert.textContent = message;
+      alert.classList.remove('hidden');
+      document.getElementById('errorAlert').classList.add('hidden');
+    }
+  </script>
+</body>
+</html>
