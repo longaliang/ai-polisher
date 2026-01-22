@@ -438,8 +438,9 @@
           document.getElementById('copyBtn').style.display = 'inline-block';
 
           // 显示token消耗
+          const remaining = data.remaining ?? data.usage?.remaining ?? 0;
           document.getElementById('tokenInfo').textContent =
-            `本次消耗: ${data.tokensUsed} tokens | 剩余: ${data.remaining.toLocaleString()} tokens`;
+            `本次消耗: ${data.tokensUsed || 0} tokens | 剩余: ${remaining.toLocaleString()} tokens`;
 
           // 更新状态显示
           updateStatusDisplay(data.usage);
