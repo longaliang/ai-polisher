@@ -19,12 +19,14 @@ export default async function handler(req, res) {
   }
 
   // 验证管理员权限
-  const adminKey = req.headers.authorization;
-  if (adminKey !== `Bearer ${process.env.ADMIN_KEY || 'admin123'}`) {
+  const authHeader = req.headers.authorization || '';
+  const expectedKey = `Bearer ${process.env.ADMIN_KEY || 'admin123'}`;
+
+  if (authHeader !== expectedKey) {
     return res.status(401).json({ error: '未授权访问' });
   }
 
-  const { clientId, action, limit, resetUsage } = req.body;
+  const { clientId, action, limit } = req.body;
 
   if (!clientId) {
     return res.status(400).json({ error: '缺少客户ID' });
@@ -41,6 +43,7 @@ export default async function handler(req, res) {
     }
 
     const client = clientsData[clientId];
+    let newUsed = client.used || 0;
 
     // 执行操作
     if (action === 'update_limit' && limit !== undefined) {
@@ -56,15 +59,12 @@ export default async function handler(req, res) {
           token: process.env.KV_REST_API_TOKEN,
         });
         await kv.set(`client_usage_${clientId}`, '0');
-        client.used = 0;
+        newUsed = 0;
       } catch (e) {
         console.log('KV reset failed:', e.message);
-        client.used = 0;
+        newUsed = 0;
       }
     }
-
-    // 保存回文件（注意：Vercel 生产环境不能写入，这是为本地开发准备的）
-    // 在生产环境，我们需要使用 KV 或其他方式存储
 
     return res.status(200).json({
       success: true,
@@ -73,7 +73,7 @@ export default async function handler(req, res) {
         id: clientId,
         name: client.name,
         limit: client.limit,
-        used: client.used
+        used: newUsed
       }
     });
 
