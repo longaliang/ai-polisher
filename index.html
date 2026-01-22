@@ -375,12 +375,18 @@
 
     // 更新状态显示
     function updateStatusDisplay(usage) {
-      const percentage = parseFloat(usage.percentage);
+      if (!usage) return;
+
+      const percentage = parseFloat(usage.percentage || '0');
+      const used = usage.used ?? 0;
+      const limit = usage.limit ?? 0;
+      const remaining = usage.remaining ?? (limit - used);
+
       const fill = document.getElementById('progressFill');
       const text = document.getElementById('progressText');
 
       fill.style.width = percentage + '%';
-      text.textContent = `${usage.percentage} (${usage.used.toLocaleString()} / ${usage.limit.toLocaleString()} tokens)`;
+      text.textContent = `${usage.percentage || '0%'} (${used.toLocaleString()} / ${limit.toLocaleString()} tokens)`;
 
       // 移除所有状态类
       fill.classList.remove('warning', 'danger');
@@ -393,9 +399,9 @@
         showError('⚠️ 额度即将用尽，请及时充值');
       }
 
-      document.getElementById('usedText').textContent = `已用: ${usage.used.toLocaleString()} tokens`;
-      document.getElementById('limitText').textContent = `总额度: ${usage.limit.toLocaleString()} tokens`;
-      document.getElementById('remainingText').textContent = `剩余: ${usage.remaining.toLocaleString()} tokens`;
+      document.getElementById('usedText').textContent = `已用: ${used.toLocaleString()} tokens`;
+      document.getElementById('limitText').textContent = `总额度: ${limit.toLocaleString()} tokens`;
+      document.getElementById('remainingText').textContent = `剩余: ${remaining.toLocaleString()} tokens`;
     }
 
     // 润色文章
