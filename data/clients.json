@@ -1,0 +1,26 @@
+{
+  "demo_client": {
+    "name": "演示客户",
+    "apiKey": "381d0275066e46f3aa1abc04f2eb9974.EQgqJMZRD4ZNtWEh",
+    "used": 0,
+    "limit": 10000,
+    "email": "demo@example.com",
+    "createdAt": "2026-01-22"
+  },
+  "client_a": {
+    "name": "客户A",
+    "apiKey": "客户A的智谱API Key",
+    "used": 0,
+    "limit": 50000,
+    "email": "client_a@example.com",
+    "createdAt": "2026-01-22"
+  },
+  "client_b": {
+    "name": "客户B",
+    "apiKey": "客户B的智谱API Key",
+    "used": 0,
+    "limit": 100000,
+    "email": "client_b@example.com",
+    "createdAt": "2026-01-22"
+  }
+}
