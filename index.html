@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI文章润色器</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .header {
+      background: white;
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+
+    .header h1 {
+      font-size: 28px;
+      color: #333;
+      margin-bottom: 8px;
+    }
+
+    .header p {
+      color: #666;
+      font-size: 14px;
+    }
+
+    .status-card {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .status-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .status-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 24px;
+      background: #f0f0f0;
+      border-radius: 12px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #667eea, #764ba2);
+      transition: width 0.5s ease;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding-right: 10px;
+    }
+
+    .progress-fill.warning {
+      background: linear-gradient(90deg, #f093fb, #f5576c);
+    }
+
+    .progress-fill.danger {
+      background: linear-gradient(90deg, #fa709a, #fee140);
+    }
+
+    .progress-text {
+      position: absolute;
+      width: 100%;
+      text-align: center;
+      line-height: 24px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .status-details {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 12px;
+      font-size: 14px;
+      color: #666;
+    }
+
+    .main-card {
+      background: white;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+
+    .input-section {
+      margin-bottom: 20px;
+    }
+
+    .section-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 12px;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 150px;
+      padding: 16px;
+      border: 2px solid #e0e0e0;
+      border-radius: 12px;
+      font-size: 15px;
+      font-family: inherit;
+      resize: vertical;
+      transition: border-color 0.3s;
+    }
+
+    textarea:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    .output-section {
+      margin-bottom: 20px;
+    }
+
+    .output-box {
+      background: #f8f9fa;
+      border-radius: 12px;
+      padding: 16px;
+      min-height: 150px;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      color: #333;
+      font-size: 15px;
+      line-height: 1.6;
+    }
+
+    .output-box.placeholder {
+      color: #999;
+      font-style: italic;
+    }
+
+    .controls {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .style-selector {
+      flex: 1;
+      min-width: 200px;
+    }
+
+    select {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid #e0e0e0;
+      border-radius: 10px;
+      font-size: 15px;
+      font-family: inherit;
+      cursor: pointer;
+      background: white;
+    }
+
+    select:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    .button {
+      padding: 12px 32px;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .button-primary {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+    }
+
+    .button-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    .button-primary:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .button-secondary {
+      background: #f0f0f0;
+      color: #333;
+    }
+
+    .button-secondary:hover {
+      background: #e0e0e0;
+    }
+
+    .loading {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid #fff;
+      border-radius: 50%;
+      border-top-color: transparent;
+      animation: spin 0.8s linear infinite;
+      margin-right: 8px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .alert {
+      padding: 12px 16px;
+      border-radius: 10px;
+      margin-bottom: 16px;
+      font-size: 14px;
+    }
+
+    .alert-error {
+      background: #fee;
+      color: #c00;
+      border: 1px solid #fcc;
+    }
+
+    .alert-success {
+      background: #efe;
+      color: #080;
+      border: 1px solid #cfc;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .token-info {
+      font-size: 12px;
+      color: #999;
+      margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- 头部 -->
+    <div class="header">
+      <h1>✨ AI文章润色器</h1>
+      <p>让您的文字更加专业、生动、有说服力</p>
+    </div>
+
+    <!-- 状态卡片 -->
+    <div class="status-card">
+      <div class="status-header">
+        <span class="status-title">📊 我的额度</span>
+        <button class="button button-secondary" onclick="refreshStatus()" style="padding: 6px 16px; font-size: 14px;">
+          🔄 刷新
+        </button>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+        <div class="progress-text" id="progressText">加载中...</div>
+      </div>
+      <div class="status-details">
+        <span id="usedText">已用: -</span>
+        <span id="limitText">总额度: -</span>
+        <span id="remainingText">剩余: -</span>
+      </div>
+    </div>
+
+    <!-- 错误提示 -->
+    <div class="alert alert-error hidden" id="errorAlert"></div>
+
+    <!-- 成功提示 -->
+    <div class="alert alert-success hidden" id="successAlert"></div>
+
+    <!-- 主卡片 -->
+    <div class="main-card">
+      <!-- 输入区 -->
+      <div class="input-section">
+        <div class="section-title">📝 原文</div>
+        <textarea id="inputText" placeholder="请输入需要润色的文章内容..."></textarea>
+      </div>
+
+      <!-- 控制区 -->
+      <div class="controls">
+        <div class="style-selector">
+          <select id="styleSelect">
+            <option value="professional">专业正式</option>
+            <option value="casual">轻松自然</option>
+            <option value="concise">简洁明了</option>
+            <option value="creative">创意生动</option>
+          </select>
+        </div>
+        <button class="button button-primary" id="polishBtn" onclick="polish()">
+          ✨ 开始润色
+        </button>
+        <button class="button button-secondary" onclick="clearAll()">
+          🗑️ 清空
+        </button>
+      </div>
+
+      <!-- Token信息 -->
+      <div class="token-info" id="tokenInfo"></div>
+
+      <!-- 输出区 -->
+      <div class="output-section" style="margin-top: 20px;">
+        <div class="section-title">🎯 润色结果</div>
+        <div class="output-box placeholder" id="outputBox">润色后的文章将显示在这里...</div>
+      </div>
+
+      <!-- 复制按钮 -->
+      <button class="button button-secondary" onclick="copyResult()" id="copyBtn" style="display: none;">
+        📋 复制结果
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // 客户ID - 实际部署时应该从URL参数或登录状态获取
+    const CLIENT_ID = new URLSearchParams(window.location.search).get('client') || 'demo_client';
+    const API_BASE = window.location.origin;
+
+    // 页面加载时获取状态
+    window.onload = function() {
+      refreshStatus();
+    };
+
+    // 刷新状态
+    async function refreshStatus() {
+      try {
+        const response = await fetch(`${API_BASE}/api/status?clientId=${CLIENT_ID}`);
+        const data = await response.json();
+
+        if (response.ok) {
+          updateStatusDisplay(data.usage);
+        } else {
+          showError('获取状态失败: ' + data.error);
+        }
+      } catch (error) {
+        showError('网络错误: ' + error.message);
+      }
+    }
+
+    // 更新状态显示
+    function updateStatusDisplay(usage) {
+      const percentage = parseFloat(usage.percentage);
+      const fill = document.getElementById('progressFill');
+      const text = document.getElementById('progressText');
+
+      fill.style.width = percentage + '%';
+      text.textContent = `${usage.percentage} (${usage.used.toLocaleString()} / ${usage.limit.toLocaleString()} tokens)`;
+
+      // 移除所有状态类
+      fill.classList.remove('warning', 'danger');
+
+      if (usage.isExhausted) {
+        fill.classList.add('danger');
+        showError('⚠️ 额度已用完，请联系管理员充值');
+      } else if (usage.isNearLimit) {
+        fill.classList.add('warning');
+        showError('⚠️ 额度即将用尽，请及时充值');
+      }
+
+      document.getElementById('usedText').textContent = `已用: ${usage.used.toLocaleString()} tokens`;
+      document.getElementById('limitText').textContent = `总额度: ${usage.limit.toLocaleString()} tokens`;
+      document.getElementById('remainingText').textContent = `剩余: ${usage.remaining.toLocaleString()} tokens`;
+    }
+
+    // 润色文章
+    async function polish() {
+      const text = document.getElementById('inputText').value.trim();
+      const style = document.getElementById('styleSelect').value;
+      const btn = document.getElementById('polishBtn');
+
+      if (!text) {
+        showError('请输入需要润色的文章内容');
+        return;
+      }
+
+      // 禁用按钮，显示loading
+      btn.disabled = true;
+      btn.innerHTML = '<span class="loading"></span>润色中...';
+
+      hideAlerts();
+      document.getElementById('outputBox').textContent = '正在润色，请稍候...';
+      document.getElementById('outputBox').classList.remove('placeholder');
+
+      try {
+        const response = await fetch(`${API_BASE}/api/chat`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            clientId: CLIENT_ID,
+            text: text,
+            style: style
+          })
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+          document.getElementById('outputBox').textContent = data.polishedText;
+          document.getElementById('outputBox').classList.remove('placeholder');
+          document.getElementById('copyBtn').style.display = 'inline-block';
+
+          // 显示token消耗
+          document.getElementById('tokenInfo').textContent =
+            `本次消耗: ${data.tokensUsed} tokens | 剩余: ${data.remaining.toLocaleString()} tokens`;
+
+          // 更新状态显示
+          updateStatusDisplay(data.usage);
+
+          showSuccess('✨ 润色完成！');
+        } else {
+          showError(data.error || '润色失败');
+          document.getElementById('outputBox').textContent = '润色失败，请重试';
+          document.getElementById('outputBox').classList.add('placeholder');
+        }
+      } catch (error) {
+        showError('网络错误: ' + error.message);
+        document.getElementById('outputBox').textContent = '网络错误，请重试';
+        document.getElementById('outputBox').classList.add('placeholder');
+      }
+
+      // 恢复按钮
+      btn.disabled = false;
+      btn.innerHTML = '✨ 开始润色';
+    }
+
+    // 清空所有
+    function clearAll() {
+      document.getElementById('inputText').value = '';
+      document.getElementById('outputBox').textContent = '润色后的文章将显示在这里...';
+      document.getElementById('outputBox').classList.add('placeholder');
+      document.getElementById('copyBtn').style.display = 'none';
+      document.getElementById('tokenInfo').textContent = '';
+      hideAlerts();
+    }
+
+    // 复制结果
+    function copyResult() {
+      const text = document.getElementById('outputBox').textContent;
+      navigator.clipboard.writeText(text).then(() => {
+        const btn = document.getElementById('copyBtn');
+        btn.textContent = '✅ 已复制';
+        setTimeout(() => {
+          btn.textContent = '📋 复制结果';
+        }, 2000);
+      });
+    }
+
+    // 显示错误
+    function showError(message) {
+      const alert = document.getElementById('errorAlert');
+      alert.textContent = message;
+      alert.classList.remove('hidden');
+      document.getElementById('successAlert').classList.add('hidden');
+    }
+
+    // 显示成功
+    function showSuccess(message) {
+      const alert = document.getElementById('successAlert');
+      alert.textContent = message;
+      alert.classList.remove('hidden');
+      document.getElementById('errorAlert').classList.add('hidden');
+    }
+
+    // 隐藏所有提示
+    function hideAlerts() {
+      document.getElementById('errorAlert').classList.add('hidden');
+      document.getElementById('successAlert').classList.add('hidden');
+    }
+  </script>
+</body>
+</html>
